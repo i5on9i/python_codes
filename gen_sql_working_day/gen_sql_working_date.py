@@ -5,7 +5,6 @@ from datetime import date, timedelta
 __author__ = 'namh'
 
 
-
 def genSql(filepath='input.txt', startDate='2015-12-01', endDate='2015-12-31'):
     """
     generate all the dates
@@ -18,26 +17,25 @@ def genSql(filepath='input.txt', startDate='2015-12-01', endDate='2015-12-31'):
     :return:
     """
     DATE_INPUT_FORMAT = "%Y-%m-%d"
+    TABLE_NAME = 'test_working_date'
 
     def getDate(line):
         return line.strip()
 
     def toDate(datestr):
         t = time.strptime(datestr, DATE_INPUT_FORMAT)
-        return date(t.tm_year,t.tm_mon,t.tm_mday)
+        return date(t.tm_year, t.tm_mon, t.tm_mday)
 
     def writeSql(date, isHoliday=False, preWorkingDate=None):
-        tableName = 'test_working_date'
-        preWdate = 'NULL' if preWorkingDate is None else preWorkingDate
-        print "insert into %s values(%s, %s, %s);"%(tableName, date, isHoliday, preWdate)
-
+        tableName = TABLE_NAME
+        preWdate = 'NULL' if preWorkingDate is None else "'%s'"%(preWorkingDate)
+        print "insert into %s (date, is_holiday, pre_working_date) values('%s', %s, %s);" % (tableName, date, isHoliday, preWdate)
 
     sdate = toDate(startDate)
     edate = toDate(endDate)
     cdate = sdate
 
     with open(filepath, 'r') as f:
-
 
         isHoliday = False
 
@@ -62,7 +60,6 @@ def genSql(filepath='input.txt', startDate='2015-12-01', endDate='2015-12-31'):
             writeSql(cdate)
             preWorkingDate = indate
             cdate += timedelta(1)
-
 
 
 def main():
