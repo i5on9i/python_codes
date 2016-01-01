@@ -1,11 +1,12 @@
 # coding=utf-8
+import os
 import time
 from datetime import date, timedelta
 
 __author__ = 'namh'
 
 
-def genSql(filepath='input.txt', startDate='2015-12-01', endDate='2015-12-31'):
+def genSql(filepath='input.txt', startDate='2015-10-01', endDate='2015-12-31'):
     """
     generate all the dates
 
@@ -17,7 +18,7 @@ def genSql(filepath='input.txt', startDate='2015-12-01', endDate='2015-12-31'):
     :return:
     """
     DATE_INPUT_FORMAT = "%Y-%m-%d"
-    TABLE_NAME = 'test_working_date'
+    TABLE_NAME = 'mfactors_workingdate'
 
     def getDate(line):
         return line.strip()
@@ -62,8 +63,90 @@ def genSql(filepath='input.txt', startDate='2015-12-01', endDate='2015-12-31'):
             cdate += timedelta(1)
 
 
+def genSql2(filepath='per.txt', startDate='2015-10-01', endDate='2015-12-31'):
+    """
+        To generate the sql command to insert into the table mfactors_stockprice
+        input files contents are just copied from the excel file.
+
+        :output
+            insert into mfactors_stockprice (code, date, closing_price,
+                stock_count, per, pbr, market_capital, eps)
+            values('A005930', '2015-10-01', 613000, NULL, 11.06, 1.75, 9.02945E+13,
+                     -0.21);
+    """
+
+
+    def getDateList():
+        dates = []
+        inputFile = os.path.join('.', 'inputs', 'input.txt')
+        with open(inputFile, 'r') as f:
+
+            for line in f:
+                dates.append({
+                    'date': line.strip()
+                })
+        return dates
+
+    def getPerList():
+        inputFile = os.path.join('.', 'inputs', 'per.txt')
+        companies = []
+        with open(inputFile, 'r') as f:
+            for line in f:
+                item = {}
+                vs = line.split('\t')
+                companies.append({
+                    'name' : vs[1],
+                    'code' : vs[0],
+                    'per_list' : vs[6:]
+                })
+        return companies
+
+    def getValueDict(inputFile):
+
+        ret = {}
+        with open(inputFile, 'r') as f:
+            for line in f:
+                vs = line.split('\t')
+                ret[vs[0]] = vs[6:]
+        return ret
+
+    '''
+        Start Here...
+    '''
+    sub = os.path.join('.', 'inputs')
+
+    dates = getDateList()
+    companies = getPerList()
+    caps = getValueDict(os.path.join(sub, 'cap.txt'))
+    pbrs = getValueDict(os.path.join(sub, 'pbr.txt'))
+    eps1s = getValueDict(os.path.join(sub, 'eps1.txt'))
+    prices = getValueDict(os.path.join(sub, 'closing_price.txt'))
+
+
+
+    table = 'mfactors_stockprice'
+
+    for cp in companies:
+        i = 0
+        code = cp['code']
+        caplist = caps[code]
+        pbrlist = pbrs[code]
+        eps1list = eps1s[code]
+        pricelist = prices[code]
+        for date in dates:
+            per = cp['per_list'][i]
+            cap = caplist[i]
+            pbr = pbrlist[i]
+            eps1 = eps1list[i]
+            print "insert into %s (code, date, closing_price, stock_count, per, pbr, market_capital, eps)" \
+                  " values('%s', '%s', %s, %s, %s, %s, %s, %s);"\
+                  %(table, code, date['date'], pricelist[i], 'NULL', per, pbr, cap, eps1)
+            i+=1
+
+
+
 def main():
-    print genSql()
+    genSql2()
 
 if __name__ == '__main__':
     main()
