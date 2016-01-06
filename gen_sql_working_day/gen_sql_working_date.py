@@ -30,13 +30,39 @@ def genSql(filepath='input.txt', startDate='2015-10-01', endDate='2015-12-31'):
     def writeSql(date, isHoliday=False, preWorkingDate=None):
         tableName = TABLE_NAME
         preWdate = 'NULL' if preWorkingDate is None else "'%s'"%(preWorkingDate)
-        print "insert into %s (date, is_holiday, pre_working_date) values('%s', %s, %s);" % (tableName, date, isHoliday, preWdate)
+
+        isLastDayOfMonth = 'NULL'
+        if (date + timedelta(days=1)).month != date.month:   # month is changed
+            if isHoliday:
+                # preWorkingDate of holiday is never be NULL
+                print "UPDATE %s SET is_last_day_of_month = %s WHERE date='%s';" % (tableName, True, preWdate)
+            else:
+                isLastDayOfMonth = True
+
+
+        if date.weekday() is 5:     # 4 : Friday
+            if not isHoliday:
+                print "insert into %s (date, is_holiday, pre_working_date, is_last_day_of_week, is_last_day_of_month) " \
+                      "values('%s', %s, %s, %s, %s);" \
+                      % (tableName, date, isHoliday, preWdate, True, isLastDayOfMonth)
+            else:
+                # preWorkingDate of holiday is never be NULL
+                print "insert into %s (date, is_holiday, pre_working_date, is_last_day_of_month ) " \
+                      "values('%s', %s, %s, %s );" \
+                      % (tableName, date, isHoliday, preWdate, isLastDayOfMonth)
+                print "UPDATE %s SET is_last_day_of_week = %s WHERE date=%s;" % (tableName, True, preWdate)
+
+
+        else:
+            print "insert into %s (date, is_holiday, pre_working_date, is_last_day_of_month ) values('%s', %s, %s, %s );" \
+                  % (tableName, date, isHoliday, preWdate, isLastDayOfMonth)
 
     sdate = toDate(startDate)
     edate = toDate(endDate)
     cdate = sdate
 
-    with open(filepath, 'r') as f:
+    fpath = os.path.join('.', 'inputs', filepath)
+    with open(fpath, 'r') as f:
 
         isHoliday = False
 
@@ -77,11 +103,13 @@ def genSql2(filepath='per.txt', startDate='2015-10-01', endDate='2015-12-31'):
 
 
     def getDateList():
+
         dates = []
         inputFile = os.path.join('.', 'inputs', 'input.txt')
         with open(inputFile, 'r') as f:
 
             for line in f:
+
                 dates.append({
                     'date': line.strip()
                 })
@@ -110,6 +138,38 @@ def genSql2(filepath='per.txt', startDate='2015-10-01', endDate='2015-12-31'):
                 ret[vs[0]] = vs[6:]
         return ret
 
+    def getIpoValueDict(inputFile):
+        ret = {}
+        with open(inputFile, 'r') as f:
+            code = ''
+            item = []
+            for line in f:
+                vs = line.split('\t')
+                if vs[0] == '----':
+                    ret[code] = item
+                    item = []
+                    code = vs[1].strip()
+                    continue
+
+                item.append(vs)
+
+        return ret
+
+
+    def getForecastValueDict(inputFile):
+        ret = {}
+        with open(inputFile, 'r') as f:
+            for line in f:
+                vs = line.split('\t')
+                ret[vs[0]] = {
+                    'rcount' : vs[6],
+                    'date': '2015-10-02',
+                    'cs3m':  vs[7],
+                    'cs1m': vs[8],
+                }
+
+        return ret
+
     '''
         Start Here...
     '''
@@ -122,9 +182,14 @@ def genSql2(filepath='per.txt', startDate='2015-10-01', endDate='2015-12-31'):
     eps1s = getValueDict(os.path.join(sub, 'eps1.txt'))
     prices = getValueDict(os.path.join(sub, 'closing_price.txt'))
 
+    ipoinfo = getIpoValueDict(os.path.join(sub, 'ipo.txt'))
+    # forecast = getIpoValueDict(os.path.join(sub, 'forecast.txt'))
+
+
 
 
     table = 'mfactors_stockprice'
+    market = 'kospi'
 
     for cp in companies:
         i = 0
@@ -133,20 +198,43 @@ def genSql2(filepath='per.txt', startDate='2015-10-01', endDate='2015-12-31'):
         pbrlist = pbrs[code]
         eps1list = eps1s[code]
         pricelist = prices[code]
+
+        ipolist = None
+        if code in ipoinfo:
+            ipolist = ipoinfo[code]
+
         for date in dates:
+
             per = cp['per_list'][i]
             cap = caplist[i]
             pbr = pbrlist[i]
             eps1 = eps1list[i]
-            print "insert into %s (code, date, closing_price, stock_count, per, pbr, market_capital, eps)" \
-                  " values('%s', '%s', %s, %s, %s, %s, %s, %s);"\
-                  %(table, code, date['date'], pricelist[i], 'NULL', per, pbr, cap, eps1)
+            closePrice = pricelist[i]
+
+            openPrice = 'NULL'
+            highPrice = 'NULL'
+            lowPrice = 'NULL'
+            if ipolist is not None:
+                ipol = ipolist[i]
+                closePrice = ipol[0]
+                openPrice = ipol[1]
+                highPrice = ipol[2]
+                lowPrice = ipol[3].strip()
+
+
+            print "insert into %s (code, date, market, close_price, stock_count, per, pbr, market_capital, eps," \
+                  " open_price, high_price, low_price)" \
+                  " values('%s', '%s', '%s', %s, %s, %s, %s, %s, %s, %s, %s, %s);"\
+                  %(table, code, date['date'], market, closePrice, 'NULL', per, pbr, cap, eps1,
+                    openPrice, highPrice, lowPrice)
             i+=1
 
 
 
+
+
 def main():
-    genSql2()
+    genSql()
 
 if __name__ == '__main__':
     main()
