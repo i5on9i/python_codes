@@ -12,3 +12,9 @@ read the working dates from the input.txt
 if the date exists in the input.txt, that is the working day.
 program print some sql statements for the working days and non-working days
 
+
+# podcast2html
+
+## How it work
+It reads the rss xml file of podcast and converts to the simple html docs.
+The output is written in UTF-8 encoding and showed through stdout.
