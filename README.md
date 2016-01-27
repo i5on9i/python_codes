@@ -18,3 +18,5 @@ program print some sql statements for the working days and non-working days
 ## How it work
 It reads the rss xml file of podcast and converts to the simple html docs.
 The output is written in UTF-8 encoding and showed through stdout.
+The empty seperate line is added every 10 items, this does not work perfectly.
+
