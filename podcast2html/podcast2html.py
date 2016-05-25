@@ -15,10 +15,10 @@ class JdnyRssParser(object):
         r = requests.get(self.url)
         r.encoding = 'utf-8'
 
-        rlist = re.findall(r'<guid>(.*?)</guid>.*?'
-                           r'<pubDate>(.*?)\d{2}:\d{2}:\d{2}\s\+\d{4}</pubDate>.*?'
-                           r'<title>(.*?)</title>.*?'
-                           r'<itunes\:subtitle>(.*?)</itunes\:subtitle>'
+        rlist = re.findall(r'<title>(.*?)</title>.*?'
+                           r'<itunes\:subtitle>(.*?)</itunes\:subtitle>.*?'
+                           r'<guid>(.*?)</guid>.*?'
+                           r'<pubDate>(.*?)\d{2}:\d{2}:\d{2}\s\+\d{4}</pubDate>'
                            , r.text, re.DOTALL)
 
         for rr in rlist:
@@ -30,10 +30,10 @@ class JdnyRssParser(object):
                 lastchar = sre.group(1)[-1]
                 if lastchar == '6' or lastchar == '1':
                     space = '<br><br>'
-            print "<a href={fpath}>{title} - {subtitle}</a>, {pubdate}{space}"\
+            print("<a href={fpath}>{title} - {subtitle}</a>, {pubdate}{space}"\
                 .format(fpath=rr[0].encode('utf-8'), pubdate=rr[1].encode('utf-8'),
                         title=rr[2].encode('utf-8'), subtitle=rr[3].encode('utf-8'),
-                        space=space)
+                        space=space))
 
 
 
@@ -44,7 +44,7 @@ def main():
     :return:
     """
     parser = JdnyRssParser()
-    print parser.open()
+    print (parser.open())
 
 
 if __name__ == '__main__':
