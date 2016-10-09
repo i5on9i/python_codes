@@ -1,5 +1,5 @@
 # coding=utf-8
-
+from __future__ import unicode_literals
 import re
 
 import requests
@@ -15,14 +15,14 @@ class JdnyRssParser(object):
         r = requests.get(self.url)
         r.encoding = 'utf-8'
 
-        rlist = re.findall(r'<title>(.*?)</title>.*?'
+        rlist = re.findall(r'<item>.*?<title>(.*?)</title>.*?'
                            r'<itunes\:subtitle>(.*?)</itunes\:subtitle>.*?'
                            r'<guid>(.*?)</guid>.*?'
                            r'<pubDate>(.*?)\d{2}:\d{2}:\d{2}\s\+\d{4}</pubDate>'
                            , r.text, re.DOTALL)
 
         for rr in rlist:
-            title = rr[0].encode('utf-8')
+            title = rr[0]
             sre = re.search(r'(\d+)회', title)
 
             space = '<br>'
@@ -31,8 +31,8 @@ class JdnyRssParser(object):
                 if lastchar == '6' or lastchar == '1':
                     space = '<br><br>'
             print("<a href={fpath}>{title} - {subtitle}</a>, {pubdate}{space}"\
-                .format(fpath=rr[2].encode('utf-8'), pubdate=rr[3].encode('utf-8'),
-                        title=rr[0].encode('utf-8'), subtitle=rr[1].encode('utf-8'),
+                .format(fpath=rr[2], pubdate=rr[3],
+                        title=rr[0], subtitle=rr[1],
                         space=space))
 
 
